@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title=settings.APP_TITLE,
     version=settings.APP_VERSION,
-    description="Backend del Módulo de Autenticación para el Sistema CRM de Gimnasio.",
+    description="Backend para el Sistema de Gimnasio.",
     docs_url="/docs",
     redoc_url="/redoc",
 )
