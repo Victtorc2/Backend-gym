@@ -216,3 +216,23 @@ class DailyIngresoNotFoundException(HTTPException):
 
     def __init__(self, message: str = "Ingreso diario no encontrado") -> None:
         super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+# ── Excepciones del módulo Recomendación de Horarios ───────────────────────────
+
+class RecommendationNotFoundException(HTTPException):
+    """404 – Recomendación de horario no encontrada."""
+    def __init__(self, message: str = "Recomendación de horario no encontrada") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class InsufficientHistoryException(HTTPException):
+    """404 – No existe historial de asistencia suficiente para generar recomendaciones."""
+    def __init__(self, message: str = "No existe historial de asistencia suficiente") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class InvalidWeekDayException(HTTPException):
+    """400 – Día de la semana inválido (solo lunes a sábado)."""
+    def __init__(self, message: str = "Día inválido: el gimnasio opera de lunes a sábado") -> None:
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)

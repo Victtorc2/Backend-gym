@@ -81,3 +81,34 @@ def require_cliente(
     if current_user.rol != UserRole.CLIENTE:
         raise AccessDeniedException("Se requiere rol de cliente")
     return current_user
+
+
+# Alias en inglés requerido por el módulo de portal cliente (Fase 10)
+require_client = require_cliente
+
+
+def get_current_client(
+    current_user: Annotated[User, Depends(require_cliente)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    """
+    Resuelve el perfil de cliente a partir del usuario JWT autenticado.
+
+    Garantiza aislamiento total de datos: el cliente_id se obtiene SIEMPRE
+    del token, nunca del request. Imposible acceder a datos de otro cliente.
+
+    Raises:
+        AccessDeniedException: Si el rol no es cliente (vía require_cliente).
+        UserNotFoundException: Si no existe perfil de cliente para este usuario.
+    """
+    from app.repositories.client_repository import ClientRepository
+
+    repo = ClientRepository(db)
+    client = repo.get_by_user_id(current_user.id)
+
+    if client is None:
+        raise UserNotFoundException(
+            "No se encontró un perfil de cliente asociado a este usuario"
+        )
+
+    return client

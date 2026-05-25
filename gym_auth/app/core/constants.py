@@ -174,3 +174,43 @@ ACTIVITY_LOW_THRESHOLD: int    = 1   # 1-7 visitas/mes → poco activo
 
 # Edad límite para clasificar como "joven" (inclusive)
 AGE_YOUNG_MAX: int = 25   # 14-25 → joven | 26+ → adulto
+
+
+# ── Módulo Recomendación de Horarios (Fase 10) ─────────────────────────────────
+
+class AffluenceLevel(str, Enum):
+    """Nivel de afluencia de un bloque horario según ingresos registrados."""
+    BAJA  = "BAJA"   # 0-20 personas
+    MEDIA = "MEDIA"  # 21-45 personas
+    ALTA  = "ALTA"   # 46+ personas
+
+
+class WeekDay(str, Enum):
+    """Días de operación del gimnasio (lunes a sábado)."""
+    LUNES     = "lunes"
+    MARTES    = "martes"
+    MIERCOLES = "miercoles"
+    JUEVES    = "jueves"
+    VIERNES   = "viernes"
+    SABADO    = "sabado"
+
+
+# Horario de operación del gimnasio
+GYM_OPEN_HOUR: int  = 7    # 07:00 AM
+GYM_CLOSE_HOUR: int = 22   # 10:00 PM
+
+# Umbrales de clasificación de afluencia (cantidad promedio de personas por bloque)
+AFFLUENCE_LOW_MAX: int  = 20   # 0-20  → BAJA
+AFFLUENCE_MED_MAX: int  = 45   # 21-45 → MEDIA
+                               # 46+   → ALTA
+
+# Mapeo de weekday() de Python (lunes=0) al enum de día
+PYTHON_WEEKDAY_TO_ENUM: dict = {
+    0: "lunes",
+    1: "martes",
+    2: "miercoles",
+    3: "jueves",
+    4: "viernes",
+    5: "sabado",
+    # 6 (domingo) se excluye: el gimnasio no opera
+}
