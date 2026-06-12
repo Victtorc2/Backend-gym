@@ -1,0 +1,33 @@
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ── Entornos virtuales ───────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ── Variables de entorno (secretos) ──────────────────────
+.env
+.env.backup
+*.env.local
+
+# ── Logs ─────────────────────────────────────────────────
+*.log
+server.log
+
+# ── Herramientas / editores ──────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# ── Distribución / build ─────────────────────────────────
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
