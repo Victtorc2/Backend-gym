@@ -2,7 +2,11 @@
 Constantes globales de la aplicación.
 Centraliza valores fijos para evitar strings mágicos dispersos.
 """
+from datetime import timedelta, timezone
 from enum import Enum
+
+# Perú no aplica horario de verano: UTC-5 todo el año.
+LIMA_TZ = timezone(timedelta(hours=-5), name="America/Lima")
 
 
 class UserRole(str, Enum):

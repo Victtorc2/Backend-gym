@@ -95,6 +95,7 @@ class DailyClientDetailResponse(DailyClientResponse):
 
     total_pagos: int = 0
     total_ingresos: int = 0
+    pago_hoy: bool = False
 
 
 # ══════════════════════════════════════════════════════════════════════════════

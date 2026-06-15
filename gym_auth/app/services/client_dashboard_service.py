@@ -13,6 +13,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from app.core.constants import (
+    LIMA_TZ,
     AffluenceLevel,
     ClientStatus,
     PYTHON_WEEKDAY_TO_ENUM,
@@ -223,8 +224,8 @@ class ClientDashboardService:
         """
         self._assert_active(client)
 
-        # Determinar el día actual
-        dia_enum_str = PYTHON_WEEKDAY_TO_ENUM.get(date.today().weekday())
+        # Determinar el día actual (hora de Lima)
+        dia_enum_str = PYTHON_WEEKDAY_TO_ENUM.get(datetime.now(LIMA_TZ).date().weekday())
 
         # Si hoy es domingo (gimnasio cerrado), no hay recomendaciones
         if dia_enum_str is None:

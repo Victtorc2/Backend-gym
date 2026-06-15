@@ -12,11 +12,11 @@ Reglas de negocio implementadas:
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
-from app.core.constants import DailyClientStatus, DailyIngresoStatus
+from app.core.constants import LIMA_TZ, DailyClientStatus, DailyIngresoStatus
 from app.core.exceptions import (
     DailyClientAlreadyExistsException,
     DailyClientInactiveException,
@@ -46,13 +46,13 @@ from app.schemas.daily_client_schema import (
 
 
 def _today() -> date:
-    """Devuelve la fecha actual (UTC). Centralizado para facilitar tests."""
-    return datetime.now(timezone.utc).date()
+    """Devuelve la fecha actual (hora de Lima). Centralizado para facilitar tests."""
+    return datetime.now(LIMA_TZ).date()
 
 
 def _now_time():
-    """Devuelve la hora actual (UTC)."""
-    return datetime.now(timezone.utc).time().replace(microsecond=0)
+    """Devuelve la hora actual (hora de Lima)."""
+    return datetime.now(LIMA_TZ).time().replace(microsecond=0)
 
 
 def _to_client_response(client: DailyClient) -> DailyClientResponse:
@@ -131,10 +131,12 @@ class DailyClientService:
         clients = self._repo.list_all(
             estado=estado, nombre_contains=nombre_contains
         )
+        hoy = _today()
         result = []
         for c in clients:
             total_pagos = self._payment_repo.count_by_cliente(c.id)
             total_ingresos = self._ingreso_repo.count_aprobados_by_cliente(c.id)
+            pago_hoy = self._payment_repo.get_by_cliente_and_fecha(c.id, hoy) is not None
             result.append(
                 DailyClientDetailResponse(
                     id=c.id,
@@ -144,6 +146,7 @@ class DailyClientService:
                     created_at=c.created_at,
                     total_pagos=total_pagos,
                     total_ingresos=total_ingresos,
+                    pago_hoy=pago_hoy,
                 )
             )
         return result

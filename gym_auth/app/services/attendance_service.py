@@ -9,9 +9,10 @@ Siempre registra el intento (aprobado o denegado) para trazabilidad completa.
 from __future__ import annotations
 
 import math
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 
 from app.core.constants import (
+    LIMA_TZ,
     AttendanceStatus,
     CardStatus,
     ClientStatus,
@@ -71,8 +72,8 @@ class AttendanceService:
         Returns:
             CheckInResultSchema con el registro creado y el veredicto.
         """
-        now = datetime.now(timezone.utc)
-        today = date.today()
+        now = datetime.now(LIMA_TZ)
+        today = now.date()
         hora_actual = now.time()
 
         # ── 1. Tarjeta existe ──────────────────────────────────────────────────
