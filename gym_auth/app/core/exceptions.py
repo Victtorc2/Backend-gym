@@ -236,3 +236,17 @@ class InvalidWeekDayException(HTTPException):
     """400 – Día de la semana inválido (solo lunes a sábado)."""
     def __init__(self, message: str = "Día inválido: el gimnasio opera de lunes a sábado") -> None:
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+# ── Excepciones del módulo Recomendación Personalizada a Clientes ──────────────
+
+class ClientRecommendationNotFoundException(HTTPException):
+    """404 – Recomendación personalizada no encontrada."""
+    def __init__(self, message: str = "Recomendación no encontrada") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class ClientRecommendationInvalidException(HTTPException):
+    """400 – Datos inválidos para la recomendación (horario mal formado, etc.)."""
+    def __init__(self, message: str = "Datos de la recomendación inválidos") -> None:
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)

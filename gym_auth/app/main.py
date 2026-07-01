@@ -20,6 +20,7 @@ from app.routes.daily_client_router import daily_client_router, daily_ingreso_ro
 from app.routes.segmentation_router import router as segmentation_router
 from app.routes.report_router import router as report_router
 from app.routes.recommendation_router import router as recommendation_router
+from app.routes.client_recommendation_router import router as client_recommendation_router
 from app.routes.client_dashboard_router import router as client_dashboard_router
 from app.seed.admin_seed import run_admin_seed
 import app.models.user       # noqa: F401
@@ -30,6 +31,7 @@ import app.models.payment    # noqa: F401
 import app.models.attendance # noqa: F401
 import app.models.daily_client  # noqa: F401
 import app.models.recommendation  # noqa: F401
+import app.models.client_recommendation  # noqa: F401
 
 # ── Logging básico ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -105,6 +107,7 @@ app.include_router(daily_ingreso_router)
 app.include_router(segmentation_router)
 app.include_router(report_router)
 app.include_router(recommendation_router)
+app.include_router(client_recommendation_router)
 app.include_router(client_dashboard_router)
 
 

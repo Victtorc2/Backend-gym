@@ -154,9 +154,19 @@ class BloqueHorarioSchema(BaseModel):
     nivel_afluencia: AffluenceLevel
 
 
+class RecomendacionPersonalSchema(BaseModel):
+    """Recomendación de horario que el administrador asignó a este cliente."""
+    dia_semana: WeekDay
+    horario: str                       # ej. "08:00-09:00"
+    nivel_afluencia: AffluenceLevel | None
+    mensaje: str | None                # nota del administrador
+    asignada_el: datetime
+
+
 class MiHorarioRecomendadoSchema(BaseModel):
     """Recomendación de horarios personalizada según el día actual."""
     dia_actual: WeekDay
+    recomendacion_personal: RecomendacionPersonalSchema | None  # asignada por el admin
     horario_recomendado: BloqueHorarioSchema | None
     horario_a_evitar: BloqueHorarioSchema | None
     horarios_libres_hoy: list[BloqueHorarioSchema]

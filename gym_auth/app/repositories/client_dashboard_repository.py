@@ -15,11 +15,13 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import (
     AttendanceStatus,
+    ClientRecommendationStatus,
     MembershipStatus,
     PaymentStatus,
     WeekDay,
 )
 from app.models.attendance import Attendance
+from app.models.client_recommendation import ClientRecommendation
 from app.models.membership import Membership
 from app.models.payment import Payment
 from app.models.recommendation import ScheduleRecommendation
@@ -163,4 +165,18 @@ class ClientDashboardRepository:
             .filter(ScheduleRecommendation.dia_semana == dia)
             .order_by(ScheduleRecommendation.hora_inicio.asc())
             .all()
+        )
+
+    def get_active_personal_recommendation(
+        self, cliente_id: int
+    ) -> ClientRecommendation | None:
+        """Devuelve la recomendación personalizada ACTIVA asignada al cliente."""
+        return (
+            self._db.query(ClientRecommendation)
+            .filter(
+                ClientRecommendation.cliente_id == cliente_id,
+                ClientRecommendation.estado == ClientRecommendationStatus.ACTIVA,
+            )
+            .order_by(ClientRecommendation.created_at.desc())
+            .first()
         )

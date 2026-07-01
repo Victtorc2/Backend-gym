@@ -208,6 +208,24 @@ AFFLUENCE_LOW_MAX: int  = 20   # 0-20  → BAJA
 AFFLUENCE_MED_MAX: int  = 45   # 21-45 → MEDIA
                                # 46+   → ALTA
 
+# ── Módulo Recomendación Personalizada a Cliente ───────────────────────────────
+
+class ClientRecommendationOrigin(str, Enum):
+    """Origen de una recomendación de horario personalizada a un cliente."""
+    ASISTIDA = "asistida"   # tomada del análisis de afluencia (bloque de baja concurrencia)
+    MANUAL   = "manual"     # hora ajustada manualmente por el administrador
+
+
+class ClientRecommendationStatus(str, Enum):
+    """Estado de una recomendación personalizada asignada a un cliente."""
+    ACTIVA     = "activa"       # vigente y visible para el cliente
+    DESCARTADA = "descartada"   # reemplazada por otra o dada de baja por el admin
+
+
+# Cantidad de bloques de baja concurrencia sugeridos por defecto al admin
+DEFAULT_SUGGESTED_BLOCKS: int = 10
+
+
 # Mapeo de weekday() de Python (lunes=0) al enum de día
 PYTHON_WEEKDAY_TO_ENUM: dict = {
     0: "lunes",

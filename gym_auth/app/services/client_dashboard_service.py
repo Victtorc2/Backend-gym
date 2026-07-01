@@ -36,6 +36,7 @@ from app.schemas.client_dashboard_schema import (
     MiPagoSchema,
     MiPerfilSchema,
     MisPagosSchema,
+    RecomendacionPersonalSchema,
     SinMembresiaSchema,
 )
 from app.utils.recommendation_utils import format_hour_range
@@ -224,6 +225,9 @@ class ClientDashboardService:
         """
         self._assert_active(client)
 
+        # Recomendación personalizada asignada por el admin (si existe)
+        personal = self._get_recomendacion_personal(client.id)
+
         # Determinar el día actual (hora de Lima)
         dia_enum_str = PYTHON_WEEKDAY_TO_ENUM.get(datetime.now(LIMA_TZ).date().weekday())
 
@@ -231,6 +235,7 @@ class ClientDashboardService:
         if dia_enum_str is None:
             return MiHorarioRecomendadoSchema(
                 dia_actual=WeekDay.LUNES,
+                recomendacion_personal=personal,
                 horario_recomendado=None,
                 horario_a_evitar=None,
                 horarios_libres_hoy=[],
@@ -244,6 +249,7 @@ class ClientDashboardService:
         if not bloques:
             return MiHorarioRecomendadoSchema(
                 dia_actual=dia_actual,
+                recomendacion_personal=personal,
                 horario_recomendado=None,
                 horario_a_evitar=None,
                 horarios_libres_hoy=[],
@@ -264,17 +270,42 @@ class ClientDashboardService:
         libres = [to_bloque(b) for b in bloques if b.es_recomendado]
         picos = [to_bloque(b) for b in bloques if b.evitar]
 
+        # Si el admin le asignó una recomendación personal, se destaca primero
+        if personal is not None:
+            mensaje = (
+                f"Tu entrenador te recomienda venir el {personal.dia_semana.value} "
+                f"de {personal.horario} (menos gente)."
+            )
+        else:
+            mensaje = (
+                f"Hoy {dia_actual.value}, el mejor horario es "
+                f"{format_hour_range(recomendado.hora_inicio, recomendado.hora_fin)} "
+                f"(~{float(recomendado.cantidad_promedio):.0f} personas)"
+            )
+
         return MiHorarioRecomendadoSchema(
             dia_actual=dia_actual,
+            recomendacion_personal=personal,
             horario_recomendado=to_bloque(recomendado),
             horario_a_evitar=to_bloque(a_evitar),
             horarios_libres_hoy=libres,
             horas_pico_hoy=picos,
-            mensaje=(
-                f"Hoy {dia_actual.value}, el mejor horario es "
-                f"{format_hour_range(recomendado.hora_inicio, recomendado.hora_fin)} "
-                f"(~{float(recomendado.cantidad_promedio):.0f} personas)"
-            ),
+            mensaje=mensaje,
+        )
+
+    def _get_recomendacion_personal(
+        self, cliente_id: int
+    ) -> RecomendacionPersonalSchema | None:
+        """Construye la recomendación personal activa del cliente, si existe."""
+        rec = self._repo.get_active_personal_recommendation(cliente_id)
+        if rec is None:
+            return None
+        return RecomendacionPersonalSchema(
+            dia_semana=rec.dia_semana,
+            horario=format_hour_range(rec.hora_inicio, rec.hora_fin),
+            nivel_afluencia=rec.nivel_afluencia,
+            mensaje=rec.mensaje,
+            asignada_el=rec.created_at,
         )
 
     # ══════════════════════════════════════════════════════════════════════════
