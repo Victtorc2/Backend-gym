@@ -22,7 +22,12 @@ from app.routes.report_router import router as report_router
 from app.routes.recommendation_router import router as recommendation_router
 from app.routes.client_recommendation_router import router as client_recommendation_router
 from app.routes.client_dashboard_router import router as client_dashboard_router
+from app.routes.machine_router import router as machine_router
+from app.routes.routine_router import router as routine_router
+from app.routes.training_plan_router import router as training_plan_router
+from app.routes.demand_router import router as demand_router
 from app.seed.admin_seed import run_admin_seed
+from app.seed.machine_seed import run_machine_seed
 import app.models.user       # noqa: F401
 import app.models.client     # noqa: F401
 import app.models.membership # noqa: F401
@@ -32,6 +37,9 @@ import app.models.attendance # noqa: F401
 import app.models.daily_client  # noqa: F401
 import app.models.recommendation  # noqa: F401
 import app.models.client_recommendation  # noqa: F401
+import app.models.machine        # noqa: F401
+import app.models.routine        # noqa: F401
+import app.models.training_plan  # noqa: F401
 
 # ── Logging básico ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -109,6 +117,10 @@ app.include_router(report_router)
 app.include_router(recommendation_router)
 app.include_router(client_recommendation_router)
 app.include_router(client_dashboard_router)
+app.include_router(machine_router)
+app.include_router(routine_router)
+app.include_router(training_plan_router)
+app.include_router(demand_router)
 
 
 # ── Eventos de ciclo de vida ───────────────────────────────────────────────────
@@ -126,9 +138,10 @@ def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     logger.info("Tablas verificadas / creadas en la base de datos.")
 
-    # Seed del administrador inicial
+    # Seeds iniciales: administrador + catálogo de máquinas de ejemplo
     with SessionLocal() as db:
         run_admin_seed(db)
+        run_machine_seed(db)
 
     logger.info("Aplicación lista.")
 

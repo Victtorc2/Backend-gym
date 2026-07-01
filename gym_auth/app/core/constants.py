@@ -236,3 +236,51 @@ PYTHON_WEEKDAY_TO_ENUM: dict = {
     5: "sabado",
     # 6 (domingo) se excluye: el gimnasio no opera
 }
+
+
+# ── Módulo Planificación Inteligente de Rutinas y Gestión de Demanda ────────────
+
+class MuscleZone(str, Enum):
+    """Zona muscular / grupo de una máquina o ejercicio."""
+    PECHO    = "pecho"
+    ESPALDA  = "espalda"
+    PIERNAS  = "piernas"
+    GLUTEOS  = "gluteos"
+    BICEPS   = "biceps"
+    TRICEPS  = "triceps"
+    HOMBROS  = "hombros"
+    ABDOMEN  = "abdomen"
+    CARDIO   = "cardio"
+
+
+class TrainingPlanStatus(str, Enum):
+    """
+    Nivel de compromiso del cliente con su planificación del día.
+    Cuanto más avanzado el estado, más precisa la predicción de demanda.
+    """
+    PLANEADO   = "planeado"    # "tengo pensado ir"
+    CONFIRMADO = "confirmado"  # "sí asistiré"
+    EN_CAMINO  = "en_camino"   # va hacia el gimnasio
+    CANCELADO  = "cancelado"   # ya no asistirá
+
+
+# Estados que cuentan como demanda prevista (excluye cancelado)
+ACTIVE_PLAN_STATES: frozenset = frozenset({"planeado", "confirmado", "en_camino"})
+
+
+class DemandLevel(str, Enum):
+    """Nivel de demanda previsto para un bloque horario."""
+    BAJO      = "bajo"
+    MEDIO     = "medio"
+    ALTO      = "alto"
+    MUY_ALTO  = "muy_alto"
+
+
+# Umbrales de nivel de demanda por bloque horario (nº de clientes que planifican)
+DEMAND_LOW_MAX: int  = 5    # 0-5   → bajo
+DEMAND_MED_MAX: int  = 12   # 6-12  → medio
+DEMAND_HIGH_MAX: int = 20   # 13-20 → alto
+                            # 21+   → muy_alto
+
+# Umbral del Índice de Demanda para recomendar invertir en más unidades
+DEMAND_INDEX_INVEST_THRESHOLD: float = 40.0

@@ -250,3 +250,41 @@ class ClientRecommendationInvalidException(HTTPException):
     """400 – Datos inválidos para la recomendación (horario mal formado, etc.)."""
     def __init__(self, message: str = "Datos de la recomendación inválidos") -> None:
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+# ── Excepciones del módulo Planificación Inteligente / Gestión de Demanda ──────
+
+class MachineNotFoundException(HTTPException):
+    """404 – Máquina no encontrada."""
+    def __init__(self, message: str = "Máquina no encontrada") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class MachineAlreadyExistsException(HTTPException):
+    """409 – Ya existe una máquina con ese nombre."""
+    def __init__(self, message: str = "Ya existe una máquina con ese nombre") -> None:
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail=message)
+
+
+class RoutineNotFoundException(HTTPException):
+    """404 – Rutina no encontrada."""
+    def __init__(self, message: str = "Rutina no encontrada") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class RoutineInvalidException(HTTPException):
+    """400 – Datos de rutina inválidos (sin máquinas, máquinas inexistentes...)."""
+    def __init__(self, message: str = "Datos de la rutina inválidos") -> None:
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+class TrainingPlanNotFoundException(HTTPException):
+    """404 – Planificación de entrenamiento no encontrada."""
+    def __init__(self, message: str = "Planificación no encontrada") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class TrainingPlanInvalidException(HTTPException):
+    """400 – Datos de planificación inválidos (sin zonas ni rutina, etc.)."""
+    def __init__(self, message: str = "Datos de la planificación inválidos") -> None:
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
