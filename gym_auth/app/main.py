@@ -26,6 +26,7 @@ from app.routes.machine_router import router as machine_router
 from app.routes.routine_router import router as routine_router
 from app.routes.training_plan_router import router as training_plan_router
 from app.routes.demand_router import router as demand_router
+from app.routes.feedback_router import client_feedback_router, admin_feedback_router
 from app.seed.admin_seed import run_admin_seed
 from app.seed.machine_seed import run_machine_seed
 import app.models.user       # noqa: F401
@@ -40,6 +41,7 @@ import app.models.client_recommendation  # noqa: F401
 import app.models.machine        # noqa: F401
 import app.models.routine        # noqa: F401
 import app.models.training_plan  # noqa: F401
+import app.models.feedback       # noqa: F401
 
 # ── Logging básico ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -121,6 +123,8 @@ app.include_router(machine_router)
 app.include_router(routine_router)
 app.include_router(training_plan_router)
 app.include_router(demand_router)
+app.include_router(client_feedback_router)
+app.include_router(admin_feedback_router)
 
 
 # ── Eventos de ciclo de vida ───────────────────────────────────────────────────

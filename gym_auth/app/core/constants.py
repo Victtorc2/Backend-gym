@@ -284,3 +284,20 @@ DEMAND_HIGH_MAX: int = 20   # 13-20 → alto
 
 # Umbral del Índice de Demanda para recomendar invertir en más unidades
 DEMAND_INDEX_INVEST_THRESHOLD: float = 40.0
+
+
+# ── Módulo Comentarios / Sugerencias del Cliente ───────────────────────────────
+
+class FeedbackType(str, Enum):
+    """Tipo de mensaje que el cliente envía al gimnasio."""
+    COMENTARIO    = "comentario"
+    SUGERENCIA    = "sugerencia"
+    RECOMENDACION = "recomendacion"
+    QUEJA         = "queja"
+
+
+class FeedbackStatus(str, Enum):
+    """Estado de gestión del mensaje por parte del administrador."""
+    NUEVO     = "nuevo"      # aún no revisado
+    LEIDO     = "leido"      # el admin ya lo vio
+    ARCHIVADO = "archivado"  # gestionado / guardado

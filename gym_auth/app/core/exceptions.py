@@ -288,3 +288,17 @@ class TrainingPlanInvalidException(HTTPException):
     """400 – Datos de planificación inválidos (sin zonas ni rutina, etc.)."""
     def __init__(self, message: str = "Datos de la planificación inválidos") -> None:
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+# ── Excepciones del módulo Comentarios / Sugerencias ──────────────────────────
+
+class FeedbackNotFoundException(HTTPException):
+    """404 – Comentario/sugerencia no encontrado."""
+    def __init__(self, message: str = "Mensaje no encontrado") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class FeedbackAccessDeniedException(HTTPException):
+    """403 – El cliente intenta acceder a un mensaje que no es suyo."""
+    def __init__(self, message: str = "No puedes acceder a este mensaje") -> None:
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=message)
