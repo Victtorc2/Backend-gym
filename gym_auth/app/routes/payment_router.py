@@ -20,7 +20,11 @@ from app.dependencies.auth_dependencies import require_admin
 from app.repositories.client_repository import ClientRepository
 from app.repositories.membership_repository import MembershipRepository
 from app.repositories.payment_repository import PaymentRepository
-from app.schemas.payment_schema import PaymentCreateSchema, PaymentFilterSchema
+from app.schemas.payment_schema import (
+    PaymentCreateSchema,
+    PaymentFilterSchema,
+    PaymentSettleSchema,
+)
 from app.services.payment_service import PaymentService
 from app.utils.responses import success_response
 from datetime import date
@@ -68,6 +72,30 @@ def register_payment(
         data=result.model_dump(),
         message="Pago registrado correctamente",
         status_code=201,
+    )
+
+
+@router.post(
+    "/{payment_id}/abono",
+    summary="Abonar / completar un pago parcial",
+    dependencies=[Depends(require_admin)],
+)
+def settle_payment(
+    payment_id: int,
+    data: PaymentSettleSchema,
+    service: Annotated[PaymentService, Depends(_get_payment_service)],
+):
+    """
+    Registra un abono sobre un pago parcial existente. Reduce el saldo pendiente
+    y, si se completa, marca el pago como `pagado` (ya no cuenta como deuda).
+    No crea un pago nuevo: actualiza el mismo registro.
+
+    **Solo administradores.**
+    """
+    result = service.settle_payment(payment_id, data)
+    return success_response(
+        data=result.model_dump(),
+        message="Abono registrado correctamente",
     )
 
 

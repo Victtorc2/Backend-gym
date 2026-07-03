@@ -302,3 +302,29 @@ class FeedbackAccessDeniedException(HTTPException):
     """403 – El cliente intenta acceder a un mensaje que no es suyo."""
     def __init__(self, message: str = "No puedes acceder a este mensaje") -> None:
         super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+
+
+# ── Excepciones del módulo Reservas de Máquina ────────────────────────────────
+
+class ReservationNotFoundException(HTTPException):
+    """404 – Reserva no encontrada."""
+    def __init__(self, message: str = "Reserva no encontrada") -> None:
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+
+class ReservationInvalidException(HTTPException):
+    """400 – Datos de reserva inválidos (horario fuera de rango, etc.)."""
+    def __init__(self, message: str = "Datos de la reserva inválidos") -> None:
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+class ReservationConflictException(HTTPException):
+    """409 – La máquina no tiene disponibilidad en esa franja."""
+    def __init__(self, message: str = "La máquina no está disponible en esa franja") -> None:
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail=message)
+
+
+class ReservationAccessDeniedException(HTTPException):
+    """403 – El cliente intenta gestionar una reserva que no es suya."""
+    def __init__(self, message: str = "No puedes acceder a esta reserva") -> None:
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=message)

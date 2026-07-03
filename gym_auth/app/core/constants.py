@@ -301,3 +301,17 @@ class FeedbackStatus(str, Enum):
     NUEVO     = "nuevo"      # aún no revisado
     LEIDO     = "leido"      # el admin ya lo vio
     ARCHIVADO = "archivado"  # gestionado / guardado
+
+
+# ── Módulo Reservas de Máquina ─────────────────────────────────────────────────
+
+class ReservationStatus(str, Enum):
+    """Estado de una reserva de máquina por franja horaria."""
+    ACTIVA    = "activa"
+    CANCELADA = "cancelada"
+
+
+# Duraciones permitidas (minutos) para reservar una máquina
+RESERVATION_MIN_DURATION: int = 15
+RESERVATION_MAX_DURATION: int = 120
+RESERVATION_DURATION_STEP: int = 15

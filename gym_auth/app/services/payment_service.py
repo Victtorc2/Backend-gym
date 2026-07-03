@@ -31,6 +31,7 @@ from app.schemas.payment_schema import (
     PaymentCreateSchema,
     PaymentFilterSchema,
     PaymentResponseSchema,
+    PaymentSettleSchema,
 )
 from app.utils.payment_utils import compute_payment_state, resolve_overdue_status
 
@@ -106,6 +107,49 @@ class PaymentService:
                 metodo_pago=data.metodo_pago,
                 fecha_pago=date.today(),
                 estado=estado,
+            )
+            self._payments.commit()
+        except Exception:
+            self._payments.rollback()
+            raise
+
+        return PaymentResponseSchema.model_validate(payment)
+
+    def settle_payment(
+        self, payment_id: int, data: PaymentSettleSchema
+    ) -> PaymentResponseSchema:
+        """
+        Abona un monto a un pago parcial existente, completándolo total o
+        parcialmente. Al saldar por completo, el pago pasa a PAGADO y deja de
+        contar como deuda (sin crear un pago nuevo).
+
+        Raises:
+            PaymentNotFoundException: Pago inexistente.
+            PaymentInvalidException:  Ya pagado o abono mayor al saldo.
+        """
+        payment = self._payments.get_by_id(payment_id)
+        if payment is None:
+            raise PaymentNotFoundException()
+        if payment.estado == PaymentStatus.PAGADO:
+            raise PaymentInvalidException("Este pago ya está saldado")
+        if data.monto > payment.saldo_pendiente:
+            raise PaymentInvalidException(
+                f"El abono ({data.monto}) supera el saldo pendiente ({payment.saldo_pendiente})"
+            )
+
+        membership = self._memberships.get_by_id(payment.membresia_id)
+        fecha_fin = membership.fecha_fin if membership else date.today()
+
+        nuevo_pagado = payment.monto_pagado + data.monto
+        saldo, estado = compute_payment_state(payment.monto_total, nuevo_pagado, fecha_fin)
+
+        try:
+            self._payments.apply_settlement(
+                payment,
+                monto_pagado=nuevo_pagado,
+                saldo_pendiente=saldo,
+                estado=estado,
+                metodo_pago=data.metodo_pago or payment.metodo_pago,
             )
             self._payments.commit()
         except Exception:

@@ -200,6 +200,24 @@ class PaymentRepository:
         self._db.refresh(payment)
         return payment
 
+    def apply_settlement(
+        self,
+        payment: Payment,
+        *,
+        monto_pagado: Decimal,
+        saldo_pendiente: Decimal,
+        estado: PaymentStatus,
+        metodo_pago: PaymentMethod,
+    ) -> Payment:
+        """Aplica un abono: actualiza monto pagado, saldo, estado y método."""
+        payment.monto_pagado = monto_pagado
+        payment.saldo_pendiente = saldo_pendiente
+        payment.estado = estado
+        payment.metodo_pago = metodo_pago
+        self._db.flush()
+        self._db.refresh(payment)
+        return payment
+
     def commit(self) -> None:
         """Confirma la transacción activa."""
         self._db.commit()

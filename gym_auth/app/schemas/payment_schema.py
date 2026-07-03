@@ -45,6 +45,20 @@ class PaymentCreateSchema(BaseModel):
         return self
 
 
+# ── Abonar a un pago parcial (completar) ───────────────────────────────────────
+
+class PaymentSettleSchema(BaseModel):
+    """Registra un abono sobre un pago parcial existente (reduce el saldo)."""
+    monto: Decimal = Field(
+        ..., gt=0, max_digits=10, decimal_places=2,
+        description="Monto a abonar (no puede superar el saldo pendiente)",
+        examples=[["50.00"]],
+    )
+    metodo_pago: PaymentMethod | None = Field(
+        default=None, description="Método del abono; si se omite, conserva el original"
+    )
+
+
 # ── Respuesta individual ───────────────────────────────────────────────────────
 
 class PaymentResponseSchema(BaseModel):
