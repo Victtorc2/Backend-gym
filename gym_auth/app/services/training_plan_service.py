@@ -99,6 +99,31 @@ class TrainingPlanService:
         )
         return self._build_response(plan, con_valor_agregado=True)
 
+    def checkin(
+        self, client: Client, hora_inicio, fecha: date | None = None
+    ) -> TrainingPlanResponseSchema:
+        """
+        Declaración rápida de asistencia: el cliente indica a qué hora irá.
+        Crea/actualiza el plan del día como CONFIRMADO. Conserva las máquinas
+        y rutina si ya había planificado; si no, queda solo la intención de hora.
+        """
+        self._assert_active(client)
+        objetivo = fecha or date.today()
+
+        existing = self._repo.get_for_client_date(client.id, objetivo)
+        maquina_ids = [pm.maquina_id for pm in existing.maquinas] if existing else []
+        rutina_id = existing.rutina_id if existing else None
+
+        plan = self._repo.upsert(
+            cliente_id=client.id,
+            fecha=objetivo,
+            hora_inicio=hora_inicio,
+            estado=TrainingPlanStatus.CONFIRMADO,
+            rutina_id=rutina_id,
+            maquina_ids=maquina_ids,
+        )
+        return self._build_response(plan, con_valor_agregado=True)
+
     def update_status(
         self, client: Client, data: TrainingPlanStatusUpdateSchema, fecha: date | None = None
     ) -> TrainingPlanResponseSchema:

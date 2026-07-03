@@ -228,8 +228,13 @@ class ClientDashboardService:
         # Recomendación personalizada asignada por el admin (si existe)
         personal = self._get_recomendacion_personal(client.id)
 
+        # Afluencia YA declarada por otros clientes para hoy (check-in / plan)
+        hoy = datetime.now(LIMA_TZ).date()
+        confirmados = self._repo.count_declared_plans(hoy)
+        declarados_hora = self._repo.declared_plans_by_hour(hoy)
+
         # Determinar el día actual (hora de Lima)
-        dia_enum_str = PYTHON_WEEKDAY_TO_ENUM.get(datetime.now(LIMA_TZ).date().weekday())
+        dia_enum_str = PYTHON_WEEKDAY_TO_ENUM.get(hoy.weekday())
 
         # Si hoy es domingo (gimnasio cerrado), no hay recomendaciones
         if dia_enum_str is None:
@@ -240,6 +245,7 @@ class ClientDashboardService:
                 horario_a_evitar=None,
                 horarios_libres_hoy=[],
                 horas_pico_hoy=[],
+                confirmados_hoy=confirmados,
                 mensaje="El gimnasio no opera los domingos. Vuelve el lunes.",
             )
 
@@ -254,6 +260,7 @@ class ClientDashboardService:
                 horario_a_evitar=None,
                 horarios_libres_hoy=[],
                 horas_pico_hoy=[],
+                confirmados_hoy=confirmados,
                 mensaje="Aún no hay recomendaciones generadas para hoy",
             )
 
@@ -265,8 +272,12 @@ class ClientDashboardService:
                 nivel_afluencia=b.nivel_afluencia,
             )
 
-        recomendado = min(bloques, key=lambda b: b.cantidad_promedio)
-        a_evitar = max(bloques, key=lambda b: b.cantidad_promedio)
+        # Carga combinada = promedio histórico + clientes que ya declararon esa hora hoy
+        def carga_combinada(b) -> float:
+            return float(b.cantidad_promedio) + declarados_hora.get(b.hora_inicio.hour, 0)
+
+        recomendado = min(bloques, key=carga_combinada)
+        a_evitar = max(bloques, key=carga_combinada)
         libres = [to_bloque(b) for b in bloques if b.es_recomendado]
         picos = [to_bloque(b) for b in bloques if b.evitar]
 
@@ -277,10 +288,11 @@ class ClientDashboardService:
                 f"de {personal.horario} (menos gente)."
             )
         else:
+            extra = f" · {confirmados} personas ya confirmaron para hoy" if confirmados else ""
             mensaje = (
                 f"Hoy {dia_actual.value}, el mejor horario es "
                 f"{format_hour_range(recomendado.hora_inicio, recomendado.hora_fin)} "
-                f"(~{float(recomendado.cantidad_promedio):.0f} personas)"
+                f"(~{carga_combinada(recomendado):.0f} personas estimadas){extra}"
             )
 
         return MiHorarioRecomendadoSchema(
@@ -290,6 +302,7 @@ class ClientDashboardService:
             horario_a_evitar=to_bloque(a_evitar),
             horarios_libres_hoy=libres,
             horas_pico_hoy=picos,
+            confirmados_hoy=confirmados,
             mensaje=mensaje,
         )
 

@@ -25,6 +25,9 @@ class Machine(Base):
     nombre: Mapped[str] = mapped_column(String(120), unique=True, nullable=False, index=True)
     descripcion: Mapped[str | None] = mapped_column(String(300), nullable=True)
 
+    # Ruta relativa de la foto servida por el backend (ej. /static/maquinas/3_ab12.jpg)
+    foto_url: Mapped[str | None] = mapped_column(String(300), nullable=True)
+
     # ── Clasificación ──────────────────────────────────────────────────────────
     zona: Mapped[MuscleZone] = mapped_column(
         Enum(MuscleZone, name="machine_zone_enum"),

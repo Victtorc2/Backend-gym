@@ -22,7 +22,9 @@ from app.core.constants import (
 from app.models.attendance import Attendance
 from app.models.client import Client
 from app.models.machine import Machine
+from app.models.recommendation import ScheduleRecommendation
 from app.models.training_plan import TrainingPlan, TrainingPlanMachine
+from app.core.constants import WeekDay
 
 # Estados de plan que cuentan como demanda (enum, para filtros)
 _ACTIVE_STATES = [TrainingPlanStatus(s) for s in ACTIVE_PLAN_STATES]
@@ -111,6 +113,18 @@ class DemandRepository:
             query = query.filter(func.hour(TrainingPlan.hora_inicio) == hora)
         rows = query.group_by(Machine.zona).all()
         return {MuscleZone(r.z) if not isinstance(r.z, MuscleZone) else r.z: int(r.c) for r in rows}
+
+    def historical_affluence_by_hour(self, dia: WeekDay) -> dict[int, float]:
+        """
+        {hora: promedio histórico de personas} para un día de la semana,
+        desde el análisis de afluencia ('recomendaciones_horario').
+        """
+        rows = (
+            self._db.query(ScheduleRecommendation.hora_inicio, ScheduleRecommendation.cantidad_promedio)
+            .filter(ScheduleRecommendation.dia_semana == dia)
+            .all()
+        )
+        return {r[0].hour: float(r[1]) for r in rows}
 
     # ── Índice de Demanda (histórico) ──────────────────────────────────────────
 

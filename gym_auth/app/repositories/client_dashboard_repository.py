@@ -14,10 +14,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.constants import (
+    ACTIVE_PLAN_STATES,
     AttendanceStatus,
     ClientRecommendationStatus,
     MembershipStatus,
     PaymentStatus,
+    TrainingPlanStatus,
     WeekDay,
 )
 from app.models.attendance import Attendance
@@ -25,6 +27,9 @@ from app.models.client_recommendation import ClientRecommendation
 from app.models.membership import Membership
 from app.models.payment import Payment
 from app.models.recommendation import ScheduleRecommendation
+from app.models.training_plan import TrainingPlan
+
+_ACTIVE_PLAN_STATES = [TrainingPlanStatus(s) for s in ACTIVE_PLAN_STATES]
 
 
 class ClientDashboardRepository:
@@ -180,3 +185,26 @@ class ClientDashboardRepository:
             .order_by(ClientRecommendation.created_at.desc())
             .first()
         )
+
+    # ── Afluencia declarada (planes de otros clientes) ─────────────────────────
+
+    def count_declared_plans(self, fecha: date) -> int:
+        """Total de clientes que declararon asistencia (plan activo) para la fecha."""
+        return (
+            self._db.query(func.count(TrainingPlan.id))
+            .filter(TrainingPlan.fecha == fecha, TrainingPlan.estado.in_(_ACTIVE_PLAN_STATES))
+            .scalar()
+        ) or 0
+
+    def declared_plans_by_hour(self, fecha: date) -> dict[int, int]:
+        """{hora: nº de clientes que declararon esa hora} para la fecha."""
+        rows = (
+            self._db.query(
+                func.hour(TrainingPlan.hora_inicio).label("h"),
+                func.count(TrainingPlan.id).label("c"),
+            )
+            .filter(TrainingPlan.fecha == fecha, TrainingPlan.estado.in_(_ACTIVE_PLAN_STATES))
+            .group_by(func.hour(TrainingPlan.hora_inicio))
+            .all()
+        )
+        return {int(r.h): int(r.c) for r in rows}

@@ -41,6 +41,19 @@ def demanda_hoy(
     return success_response(result.model_dump(), "Demanda prevista")
 
 
+@router.get("/afluencia-prevista", summary="Afluencia prevista por hora (horas pico)", dependencies=[Depends(require_admin)])
+def afluencia_prevista(
+    service: Annotated[DemandService, Depends(_get_service)],
+    fecha: date | None = Query(default=None, description="Fecha (por defecto hoy)"),
+):
+    """
+    Anticipa las horas pico combinando las horas que los clientes declararon
+    (check-in / plan) con el promedio histórico de asistencia. **Solo administradores.**
+    """
+    result = service.predicted_affluence(fecha)
+    return success_response(result.model_dump(), "Afluencia prevista")
+
+
 @router.get("/entrenador", summary="Vista del entrenador (quién asiste hoy)", dependencies=[Depends(require_admin)])
 def vista_entrenador(
     service: Annotated[DemandService, Depends(_get_service)],

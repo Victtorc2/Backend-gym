@@ -35,6 +35,7 @@ class MachineResponseSchema(BaseModel):
     zona: MuscleZone
     cantidad: int
     descripcion: str | None
+    foto_url: str | None = None
     activa: bool
     created_at: datetime
     updated_at: datetime

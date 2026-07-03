@@ -44,6 +44,7 @@ class MachineRepository:
         buscar: str | None = None,
         zona: MuscleZone | None = None,
         solo_activas: bool = False,
+        activa: bool | None = None,
     ) -> tuple[list[Machine], int]:
         query = self._db.query(Machine)
         if buscar:
@@ -51,7 +52,9 @@ class MachineRepository:
             query = query.filter(or_(Machine.nombre.ilike(like), Machine.descripcion.ilike(like)))
         if zona is not None:
             query = query.filter(Machine.zona == zona)
-        if solo_activas:
+        if activa is not None:
+            query = query.filter(Machine.activa.is_(activa))
+        elif solo_activas:
             query = query.filter(Machine.activa.is_(True))
 
         total = query.count()
@@ -62,6 +65,15 @@ class MachineRepository:
             .all()
         )
         return items, total
+
+    def list_active_catalog(self) -> list[Machine]:
+        """Máquinas activas (operativas) para el catálogo visible al cliente."""
+        return (
+            self._db.query(Machine)
+            .filter(Machine.activa.is_(True))
+            .order_by(Machine.zona.asc(), Machine.nombre.asc())
+            .all()
+        )
 
     def create(self, data: dict) -> Machine:
         obj = Machine(**data)

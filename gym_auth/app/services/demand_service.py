@@ -11,22 +11,31 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.core.constants import DEMAND_INDEX_INVEST_THRESHOLD
+from app.core.constants import (
+    DEMAND_INDEX_INVEST_THRESHOLD,
+    GYM_CLOSE_HOUR,
+    GYM_OPEN_HOUR,
+    PYTHON_WEEKDAY_TO_ENUM,
+    WeekDay,
+)
 from app.repositories.demand_repository import DemandRepository
 from app.repositories.machine_repository import MachineRepository
 from app.repositories.training_plan_repository import TrainingPlanRepository
 from app.schemas.demand_schema import (
+    HourAffluenceItemSchema,
     HourDemandItemSchema,
     InvestmentReportSchema,
     MachineDemandIndexSchema,
     MachineDemandItemSchema,
     PrecisionStatsSchema,
+    PredictedAffluenceSchema,
     TodayDemandDashboardSchema,
     TrainerClientItemSchema,
     TrainerTodayViewSchema,
     ZoneDistributionItemSchema,
 )
 from app.utils.demand_utils import classify_demand_level, hour_block_label
+from app.utils.recommendation_utils import classify_affluence
 
 
 class DemandService:
@@ -114,6 +123,61 @@ class DemandService:
             demanda_por_hora=items_hora,
             distribucion_zonas=items_zona,
             maquinas_saturadas=saturadas,
+            mensaje=mensaje,
+        )
+
+    # ══════════════════════════════════════════════════════════════════════════
+    #  AFLUENCIA PREVISTA POR HORA (declarado + histórico)
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def predicted_affluence(self, fecha: date | None = None) -> PredictedAffluenceSchema:
+        """
+        Combina las horas declaradas por los clientes (check-in / plan) con el
+        promedio histórico de asistencia, para anticipar las horas pico del día.
+        """
+        objetivo = fecha or date.today()
+        dia_str = PYTHON_WEEKDAY_TO_ENUM.get(objetivo.weekday())
+
+        declared = self._demand.demand_by_hour(objetivo)
+        historical = (
+            self._demand.historical_affluence_by_hour(WeekDay(dia_str)) if dia_str else {}
+        )
+        total_declarados = sum(declared.values())
+
+        por_hora: list[HourAffluenceItemSchema] = []
+        for h in range(GYM_OPEN_HOUR, GYM_CLOSE_HOUR):
+            d = declared.get(h, 0)
+            hist = round(historical.get(h, 0.0))
+            total = d + hist
+            por_hora.append(HourAffluenceItemSchema(
+                hora=h,
+                horario=hour_block_label(h),
+                declarados=d,
+                historico=hist,
+                total_estimado=total,
+                nivel=classify_affluence(total),
+            ))
+
+        pico = max(por_hora, key=lambda x: x.total_estimado, default=None)
+        hora_pico = pico.horario if pico and pico.total_estimado > 0 else None
+
+        if dia_str is None:
+            mensaje = "El gimnasio no opera los domingos."
+        elif total_declarados == 0 and not historical:
+            mensaje = f"Aún sin datos de afluencia para el {objetivo.isoformat()}."
+        else:
+            mensaje = (
+                f"{total_declarados} cliente(s) declararon su hora para el "
+                f"{objetivo.isoformat()}."
+                + (f" Hora pico prevista: {hora_pico}." if hora_pico else "")
+            )
+
+        return PredictedAffluenceSchema(
+            fecha=objetivo,
+            dia_semana=dia_str,
+            total_declarados=total_declarados,
+            hora_pico_prevista=hora_pico,
+            por_hora=por_hora,
             mensaje=mensaje,
         )
 

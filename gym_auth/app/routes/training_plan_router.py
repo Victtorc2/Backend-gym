@@ -15,6 +15,7 @@ from app.repositories.machine_repository import MachineRepository
 from app.repositories.routine_repository import RoutineRepository
 from app.repositories.training_plan_repository import TrainingPlanRepository
 from app.schemas.training_plan_schema import (
+    CheckinSchema,
     TrainingPlanCreateSchema,
     TrainingPlanStatusUpdateSchema,
 )
@@ -62,6 +63,20 @@ def planificar(
     """
     result = service.plan_day(client, payload)
     return success_response(result.model_dump(), "Planificación registrada", status_code=201)
+
+
+@router.post("/checkin", status_code=201, summary="Declarar que iré hoy a cierta hora")
+def checkin(
+    payload: CheckinSchema,
+    client: Annotated[Client, Depends(get_current_client)],
+    service: Annotated[TrainingPlanService, Depends(_get_service)],
+):
+    """
+    Declaración rápida de asistencia (solo la hora). Confirma que el cliente irá
+    ese día a esa hora; alimenta la afluencia prevista del gimnasio. **Rol: cliente.**
+    """
+    result = service.checkin(client, payload.hora_inicio, payload.fecha)
+    return success_response(result.model_dump(), "¡Registrado! Te esperamos.", status_code=201)
 
 
 @router.get("/hoy", summary="Mi plan de hoy")

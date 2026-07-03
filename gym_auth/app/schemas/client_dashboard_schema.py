@@ -171,6 +171,7 @@ class MiHorarioRecomendadoSchema(BaseModel):
     horario_a_evitar: BloqueHorarioSchema | None
     horarios_libres_hoy: list[BloqueHorarioSchema]
     horas_pico_hoy: list[BloqueHorarioSchema]
+    confirmados_hoy: int = 0            # clientes que ya declararon que vienen hoy
     mensaje: str
 
 

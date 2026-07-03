@@ -3,10 +3,12 @@ Punto de entrada de la aplicación FastAPI.
 Configura middlewares, manejadores de excepciones, rutas y el seed inicial.
 """
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.database.connection import Base, SessionLocal, engine
@@ -63,6 +65,11 @@ app = FastAPI(
 # ── Middlewares ────────────────────────────────────────────────────────────────
 register_cors(app)
 app.add_middleware(RequestLoggingMiddleware)
+
+# ── Archivos estáticos (fotos de máquinas, etc.) ───────────────────────────────
+_STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+(_STATIC_DIR / "maquinas").mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 
 # ── Manejadores globales de excepciones ───────────────────────────────────────

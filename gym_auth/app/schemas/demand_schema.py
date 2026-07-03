@@ -8,7 +8,7 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from app.core.constants import DemandLevel, MuscleZone, TrainingPlanStatus
+from app.core.constants import AffluenceLevel, DemandLevel, MuscleZone, TrainingPlanStatus
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -47,6 +47,30 @@ class TodayDemandDashboardSchema(BaseModel):
     demanda_por_hora: list[HourDemandItemSchema]
     distribucion_zonas: list[ZoneDistributionItemSchema]
     maquinas_saturadas: list[str]
+    mensaje: str
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  AFLUENCIA PREVISTA POR HORA (declarado por clientes + histórico)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class HourAffluenceItemSchema(BaseModel):
+    """Afluencia prevista para un bloque horario, combinando fuentes."""
+    hora: int
+    horario: str                 # "18:00-19:00"
+    declarados: int              # clientes que declararon esa hora
+    historico: int               # promedio histórico de personas (asistencias)
+    total_estimado: int          # declarados + histórico
+    nivel: AffluenceLevel
+
+
+class PredictedAffluenceSchema(BaseModel):
+    """Afluencia prevista del gimnasio para una fecha."""
+    fecha: date
+    dia_semana: str | None
+    total_declarados: int
+    hora_pico_prevista: str | None
+    por_hora: list[HourAffluenceItemSchema]
     mensaje: str
 
 

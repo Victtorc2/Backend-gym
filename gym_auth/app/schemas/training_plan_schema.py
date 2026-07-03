@@ -28,6 +28,15 @@ class TrainingPlanStatusUpdateSchema(BaseModel):
     estado: TrainingPlanStatus
 
 
+class CheckinSchema(BaseModel):
+    """
+    Declaración rápida: 'iré al gimnasio a esta hora'. Solo requiere la hora
+    (y opcionalmente la fecha, por defecto hoy). Alimenta la afluencia prevista.
+    """
+    hora_inicio: time
+    fecha: date | None = None
+
+
 class PlanMachineItemSchema(BaseModel):
     """Máquina prevista dentro del plan."""
     maquina_id: int

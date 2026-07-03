@@ -63,9 +63,11 @@ class MachineService:
         buscar: str | None,
         zona: MuscleZone | None,
         solo_activas: bool,
+        activa: bool | None = None,
     ) -> dict:
         items, total = self._repo.list_all(
-            page=page, per_page=per_page, buscar=buscar, zona=zona, solo_activas=solo_activas
+            page=page, per_page=per_page, buscar=buscar, zona=zona,
+            solo_activas=solo_activas, activa=activa,
         )
         total_pages = math.ceil(total / per_page) if total > 0 else 1
         return {
@@ -75,3 +77,18 @@ class MachineService:
             "per_page": per_page,
             "total_pages": total_pages,
         }
+
+    def list_catalog(self) -> list[dict]:
+        """Catálogo de máquinas activas (con foto) visible para el cliente."""
+        return [
+            MachineResponseSchema.model_validate(m).model_dump()
+            for m in self._repo.list_active_catalog()
+        ]
+
+    def set_photo(self, machine_id: int, foto_url: str) -> MachineResponseSchema:
+        """Asigna la URL de la foto ya guardada a una máquina."""
+        machine = self._repo.get_by_id(machine_id)
+        if machine is None:
+            raise MachineNotFoundException()
+        machine = self._repo.update(machine, {"foto_url": foto_url})
+        return MachineResponseSchema.model_validate(machine)
