@@ -29,9 +29,9 @@ from app.repositories.machine_repository import MachineRepository
 from app.repositories.reservation_repository import ReservationRepository
 from app.schemas.reservation_schema import (
     MachineAvailabilitySchema,
+    MachineSlotOccupancySchema,
     ReservationCreateSchema,
     ReservationResponseSchema,
-    ReservationSlotSchema,
 )
 
 
@@ -109,20 +109,66 @@ class ReservationService:
 
         result: list[MachineAvailabilitySchema] = []
         for m in machines:
-            slots = [
-                ReservationSlotSchema(
-                    hora_inicio=r.hora_inicio.strftime("%H:%M"),
-                    hora_fin=r.hora_fin.strftime("%H:%M"),
-                    cliente_nombre="Tú" if r.cliente_id == client.id else "Reservado",
-                    es_mia=r.cliente_id == client.id,
-                )
-                for r in por_maquina.get(m.id, [])
-            ]
+            tramos = self._capacity_segments(
+                por_maquina.get(m.id, []), m.cantidad, client.id
+            )
             result.append(MachineAvailabilitySchema(
                 maquina_id=m.id, nombre=m.nombre, zona=m.zona,
-                cantidad=m.cantidad, foto_url=m.foto_url, reservas=slots,
+                cantidad=m.cantidad, foto_url=m.foto_url, tramos=tramos,
             ))
         return result
+
+    @staticmethod
+    def _capacity_segments(
+        reservas: list, cantidad: int, mi_id: int
+    ) -> list[MachineSlotOccupancySchema]:
+        """
+        Calcula la ocupación por tramo mediante barrido de intervalos.
+
+        Toma todas las reservas activas de una máquina en una fecha y las parte
+        en tramos según los límites (inicios y fines). En cada tramo cuenta las
+        reservas que lo cubren = unidades ocupadas; el resto son unidades libres.
+        Tramos contiguos con la misma ocupación se fusionan para no fragmentar.
+
+        Solo devuelve tramos con al menos una unidad ocupada; el tiempo restante
+        se entiende como totalmente libre.
+        """
+        if not reservas:
+            return []
+
+        # Puntos de corte: cada inicio y fin de reserva define una frontera.
+        puntos = sorted({r.hora_inicio for r in reservas} | {r.hora_fin for r in reservas})
+
+        segmentos: list[MachineSlotOccupancySchema] = []
+        for inicio, fin in zip(puntos, puntos[1:]):
+            # Reservas que cubren por completo el tramo [inicio, fin).
+            cubren = [r for r in reservas if r.hora_inicio <= inicio and r.hora_fin >= fin]
+            ocupadas = len(cubren)
+            if ocupadas == 0:
+                continue
+
+            es_mia = any(r.cliente_id == mi_id for r in cubren)
+            ocupadas = min(ocupadas, cantidad)   # nunca más ocupadas que la capacidad
+            nuevo = MachineSlotOccupancySchema(
+                hora_inicio=inicio.strftime("%H:%M"),
+                hora_fin=fin.strftime("%H:%M"),
+                ocupadas=ocupadas,
+                libres=max(cantidad - ocupadas, 0),
+                es_mia=es_mia,
+            )
+
+            # Fusiona con el tramo previo si es contiguo y tiene la misma ocupación.
+            if (
+                segmentos
+                and segmentos[-1].hora_fin == nuevo.hora_inicio
+                and segmentos[-1].ocupadas == nuevo.ocupadas
+                and segmentos[-1].es_mia == nuevo.es_mia
+            ):
+                segmentos[-1].hora_fin = nuevo.hora_fin
+            else:
+                segmentos.append(nuevo)
+
+        return segmentos
 
     # ── Mis reservas ────────────────────────────────────────────────────────────
 

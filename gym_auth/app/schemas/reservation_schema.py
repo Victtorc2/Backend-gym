@@ -26,22 +26,30 @@ class ReservationCreateSchema(BaseModel):
     )
 
 
-class ReservationSlotSchema(BaseModel):
-    """Franja ocupada de una máquina (vista de disponibilidad)."""
+class MachineSlotOccupancySchema(BaseModel):
+    """
+    Tramo horario de una máquina con su ocupación de unidades.
+
+    A diferencia de listar reservas sueltas, cada tramo indica cuántas
+    unidades están ocupadas y cuántas quedan libres en ese rango, lo que
+    permite mostrar la disponibilidad real cuando la máquina tiene varias
+    unidades (cantidad > 1).
+    """
     hora_inicio: str            # "18:00"
     hora_fin: str               # "18:30"
-    cliente_nombre: str
-    es_mia: bool
+    ocupadas: int               # unidades ocupadas en el tramo
+    libres: int                 # unidades libres en el tramo
+    es_mia: bool                # el cliente tiene una reserva en este tramo
 
 
 class MachineAvailabilitySchema(BaseModel):
-    """Máquina con sus franjas reservadas para una fecha."""
+    """Máquina con sus tramos de ocupación para una fecha."""
     maquina_id: int
     nombre: str
     zona: MuscleZone
     cantidad: int
     foto_url: str | None
-    reservas: list[ReservationSlotSchema]
+    tramos: list[MachineSlotOccupancySchema]
 
 
 class ReservationResponseSchema(BaseModel):
