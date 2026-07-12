@@ -169,7 +169,7 @@ class AttendanceService:
         record = self._attendances.get_by_id(attendance_id)
         if record is None:
             raise AttendanceNotFoundException()
-        return AttendanceResponseSchema.model_validate(record)
+        return self._to_response(record)
 
     def list_attendances(self, filters: AttendanceFilterSchema) -> PaginatedAttendanceSchema:
         """Lista asistencias con filtros y paginación."""
@@ -183,7 +183,7 @@ class AttendanceService:
         )
         total_pages = math.ceil(total / filters.per_page) if total > 0 else 1
         return PaginatedAttendanceSchema(
-            items=[AttendanceResponseSchema.model_validate(a) for a in items],
+            items=[self._to_response(a) for a in items],
             total=total,
             page=filters.page,
             per_page=filters.per_page,
@@ -195,7 +195,7 @@ class AttendanceService:
         if self._clients.get_by_id(cliente_id) is None:
             raise ClientNotFoundException()
         records = self._attendances.get_by_cliente(cliente_id)
-        return [AttendanceResponseSchema.model_validate(a) for a in records]
+        return [self._to_response(a) for a in records]
 
     def get_frequency(self, cliente_id: int) -> AttendanceFrequencySchema:
         """
@@ -216,6 +216,18 @@ class AttendanceService:
         )
 
     # ── Helpers privados ───────────────────────────────────────────────────────
+
+    @staticmethod
+    def _to_response(record) -> AttendanceResponseSchema:
+        """
+        Construye el schema de respuesta e incluye el nombre completo del cliente
+        cuando la relación está disponible (para mostrarlo en los listados).
+        """
+        schema = AttendanceResponseSchema.model_validate(record)
+        cliente = getattr(record, "cliente", None)
+        if cliente is not None:
+            schema.nombre_cliente = f"{cliente.nombres} {cliente.apellidos}"
+        return schema
 
     def _register_and_build(
         self,

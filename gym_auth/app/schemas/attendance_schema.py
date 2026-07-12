@@ -39,6 +39,7 @@ class AttendanceResponseSchema(BaseModel):
     estado: AttendanceStatus
     motivo_denegacion: DenialReason | None
     created_at: datetime
+    nombre_cliente: str | None = None   # Nombre completo del cliente (para mostrar en listados)
 
     model_config = {"from_attributes": True}
 
