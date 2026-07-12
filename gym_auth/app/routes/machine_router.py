@@ -4,6 +4,7 @@ Router del catálogo de Máquinas.
 - Cualquier usuario autenticado: catálogo de máquinas activas (con foto).
 """
 import uuid
+from datetime import date
 from pathlib import Path
 from typing import Annotated
 
@@ -14,8 +15,10 @@ from app.core.constants import MuscleZone
 from app.database.connection import get_db
 from app.dependencies.auth_dependencies import get_current_user, require_admin
 from app.repositories.machine_repository import MachineRepository
+from app.repositories.reservation_repository import ReservationRepository
 from app.schemas.machine_schema import MachineCreateSchema, MachineUpdateSchema
 from app.services.machine_service import MachineService
+from app.services.reservation_service import ReservationService
 from app.utils.responses import success_response
 
 router = APIRouter(prefix="/api/maquinas", tags=["Máquinas"])
@@ -29,6 +32,10 @@ MAX_PHOTO_BYTES = 5 * 1024 * 1024  # 5 MB
 
 def _get_service(db: Annotated[Session, Depends(get_db)]) -> MachineService:
     return MachineService(MachineRepository(db))
+
+
+def _get_reservation_service(db: Annotated[Session, Depends(get_db)]) -> ReservationService:
+    return ReservationService(ReservationRepository(db), MachineRepository(db))
 
 
 @router.post("", status_code=201, summary="Registrar máquina", dependencies=[Depends(require_admin)])
@@ -95,6 +102,32 @@ async def subir_foto(
     foto_url = f"/static/maquinas/{filename}"
     result = service.set_photo(machine_id, foto_url)
     return success_response(result.model_dump(), "Foto actualizada")
+
+
+@router.get(
+    "/{machine_id}/reservas",
+    summary="Reservas de una máquina (control admin)",
+    dependencies=[Depends(require_admin)],
+)
+def reservas_de_maquina(
+    machine_id: int,
+    service: Annotated[MachineService, Depends(_get_service)],
+    reservation_service: Annotated[ReservationService, Depends(_get_reservation_service)],
+    fecha: date | None = Query(default=None, description="Filtra por fecha (por defecto todas)"),
+    incluir_canceladas: bool = Query(default=False, description="Incluir reservas canceladas"),
+):
+    """
+    Lista las reservas de una máquina con su horario y quién la reservó, para
+    que el administrador tenga control de la ocupación. **Solo administradores.**
+    """
+    service.get(machine_id)  # valida que la máquina exista (404 uniforme si no)
+    result = reservation_service.list_admin_reservations(
+        maquina_id=machine_id, fecha=fecha, incluir_canceladas=incluir_canceladas
+    )
+    return success_response(
+        [r.model_dump() for r in result],
+        f"Reservas de la máquina {machine_id}",
+    )
 
 
 @router.get("/{machine_id}", summary="Detalle de máquina", dependencies=[Depends(require_admin)])

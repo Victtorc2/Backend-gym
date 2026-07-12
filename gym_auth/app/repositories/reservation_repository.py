@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date, time
 
 from sqlalchemy import and_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.constants import ReservationStatus
 from app.models.reservation import MachineReservation
@@ -67,6 +67,31 @@ class ReservationRepository:
             .order_by(MachineReservation.hora_inicio.asc())
             .all()
         )
+
+    def list_admin(
+        self,
+        maquina_id: int | None = None,
+        fecha: date | None = None,
+        incluir_canceladas: bool = False,
+    ) -> list[MachineReservation]:
+        """
+        Lista reservas para el administrador, con cliente y máquina cargados.
+        Filtra opcionalmente por máquina y/o fecha. Por defecto omite canceladas.
+        """
+        query = self._db.query(MachineReservation).options(
+            joinedload(MachineReservation.cliente),
+            joinedload(MachineReservation.maquina),
+        )
+        if not incluir_canceladas:
+            query = query.filter(MachineReservation.estado == ReservationStatus.ACTIVA)
+        if maquina_id is not None:
+            query = query.filter(MachineReservation.maquina_id == maquina_id)
+        if fecha is not None:
+            query = query.filter(MachineReservation.fecha == fecha)
+        return query.order_by(
+            MachineReservation.fecha.desc(),
+            MachineReservation.hora_inicio.asc(),
+        ).all()
 
     def list_for_client(
         self, cliente_id: int, fecha: date | None = None

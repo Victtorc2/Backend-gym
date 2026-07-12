@@ -63,3 +63,22 @@ class ReservationResponseSchema(BaseModel):
     hora_fin: str
     duracion_min: int
     estado: ReservationStatus
+
+
+class AdminReservationSchema(BaseModel):
+    """
+    Reserva vista por el administrador: incluye qué máquina, en qué horario
+    y quién la reservó, para el control desde el módulo de Máquinas.
+    """
+    id: int
+    maquina_id: int
+    maquina_nombre: str
+    zona: MuscleZone
+    cliente_id: int
+    cliente_nombre: str
+    cliente_dni: str | None
+    fecha: date
+    hora_inicio: str
+    hora_fin: str
+    duracion_min: int
+    estado: ReservationStatus

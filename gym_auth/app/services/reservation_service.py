@@ -28,6 +28,7 @@ from app.models.client import Client
 from app.repositories.machine_repository import MachineRepository
 from app.repositories.reservation_repository import ReservationRepository
 from app.schemas.reservation_schema import (
+    AdminReservationSchema,
     MachineAvailabilitySchema,
     MachineSlotOccupancySchema,
     ReservationCreateSchema,
@@ -176,6 +177,41 @@ class ReservationService:
         self, client: Client, fecha: date | None = None
     ) -> list[ReservationResponseSchema]:
         return [self._to_response(r) for r in self._repo.list_for_client(client.id, fecha)]
+
+    # ── Administrador ─────────────────────────────────────────────────────────
+
+    def list_admin_reservations(
+        self,
+        maquina_id: int | None = None,
+        fecha: date | None = None,
+        incluir_canceladas: bool = False,
+    ) -> list[AdminReservationSchema]:
+        """
+        Lista las reservas para el control del administrador: qué máquina, en qué
+        horario y quién la reservó. Filtra por máquina y/o fecha.
+        """
+        reservas = self._repo.list_admin(maquina_id, fecha, incluir_canceladas)
+        salida: list[AdminReservationSchema] = []
+        for r in reservas:
+            cliente = r.cliente
+            maquina = r.maquina
+            salida.append(AdminReservationSchema(
+                id=r.id,
+                maquina_id=r.maquina_id,
+                maquina_nombre=maquina.nombre if maquina else "—",
+                zona=maquina.zona if maquina else None,
+                cliente_id=r.cliente_id,
+                cliente_nombre=(
+                    f"{cliente.nombres} {cliente.apellidos}" if cliente else "—"
+                ),
+                cliente_dni=cliente.dni if cliente else None,
+                fecha=r.fecha,
+                hora_inicio=r.hora_inicio.strftime("%H:%M"),
+                hora_fin=r.hora_fin.strftime("%H:%M"),
+                duracion_min=r.duracion_min,
+                estado=r.estado,
+            ))
+        return salida
 
     def cancel_reservation(self, client: Client, rid: int) -> None:
         reserva = self._repo.get_by_id(rid)
