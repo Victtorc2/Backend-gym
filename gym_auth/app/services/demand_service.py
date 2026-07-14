@@ -138,11 +138,21 @@ class DemandService:
         objetivo = fecha or date.today()
         dia_str = PYTHON_WEEKDAY_TO_ENUM.get(objetivo.weekday())
 
-        declared = self._demand.demand_by_hour(objetivo)
+        # Clientes distintos por hora = planes/check-in ∪ reservas de máquina
+        plan_ch = self._demand.plan_client_hours(objetivo)
+        res_ch = self._demand.reservation_client_hours(objetivo)
+        declared = {
+            h: len(plan_ch.get(h, set()) | res_ch.get(h, set()))
+            for h in set(plan_ch) | set(res_ch)
+        }
         historical = (
             self._demand.historical_affluence_by_hour(WeekDay(dia_str)) if dia_str else {}
         )
-        total_declarados = sum(declared.values())
+        # Personas distintas que declararon (por plan o reserva) en todo el día
+        todos_clientes: set[int] = set()
+        for s in list(plan_ch.values()) + list(res_ch.values()):
+            todos_clientes |= s
+        total_declarados = len(todos_clientes)
 
         por_hora: list[HourAffluenceItemSchema] = []
         for h in range(GYM_OPEN_HOUR, GYM_CLOSE_HOUR):
@@ -167,8 +177,8 @@ class DemandService:
             mensaje = f"Aún sin datos de afluencia para el {objetivo.isoformat()}."
         else:
             mensaje = (
-                f"{total_declarados} cliente(s) declararon su hora para el "
-                f"{objetivo.isoformat()}."
+                f"{total_declarados} cliente(s) declararon su hora (plan o reserva) "
+                f"para el {objetivo.isoformat()}."
                 + (f" Hora pico prevista: {hora_pico}." if hora_pico else "")
             )
 
